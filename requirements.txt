@@ -1,5 +1,5 @@
-streamlit
-streamlit-webrtc
+flask
 opencv-python-headless
 mediapipe==0.10.14
-av
+numpy
+gunicorn

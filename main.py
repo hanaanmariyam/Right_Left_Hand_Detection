@@ -48,7 +48,7 @@ class VideoProcessor(VideoProcessorBase):
         return av.VideoFrame.from_ndarray(img, format="bgr24")
 
 
-# Webcam
+# Webcam with STUN server configuration
 webrtc_streamer(
     key="hand-detection",
     video_processor_factory=VideoProcessor,
@@ -56,4 +56,13 @@ webrtc_streamer(
         "video": True,
         "audio": False
     },
+    rtc_configuration={
+        "iceServers": [
+            {
+                "urls": [
+                    "stun:stun.l.google.com:19302"
+                ]
+            }
+        ]
+    }
 )

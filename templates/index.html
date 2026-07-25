@@ -3,23 +3,19 @@
 
 <head>
 
-<title>Hand Detection</title>
+<title>Right & Left Hand Detection</title>
 
 <style>
 
 body {
-    text-align: center;
-    font-family: Arial;
-    background-color: #f4f4f4;
+    text-align:center;
+    font-family:Arial;
+    background:#f5f5f5;
 }
 
-h1 {
-    color: #333;
-}
-
-img {
-    width: 70%;
-    border-radius: 10px;
+video, img {
+    width:70%;
+    border-radius:10px;
 }
 
 </style>
@@ -36,7 +32,73 @@ Real-Time Hand Detection using OpenCV + MediaPipe
 </p>
 
 
-<img src="{{ url_for('video') }}">
+<video id="video" autoplay style="display:none;"></video>
+
+<br><br>
+
+<img id="output">
+
+
+<script>
+
+const video = document.getElementById("video");
+const output = document.getElementById("output");
+
+
+// Open browser camera
+navigator.mediaDevices.getUserMedia({
+    video:true
+})
+.then(stream => {
+    video.srcObject = stream;
+});
+
+
+// Send frames
+setInterval(()=>{
+
+
+    let canvas=document.createElement("canvas");
+
+    canvas.width=video.videoWidth;
+    canvas.height=video.videoHeight;
+
+
+    let ctx=canvas.getContext("2d");
+
+    ctx.drawImage(video,0,0);
+
+
+    let image=canvas.toDataURL("image/jpeg");
+
+
+    fetch("/process",{
+
+        method:"POST",
+
+        headers:{
+            "Content-Type":"application/json"
+        },
+
+        body:JSON.stringify({
+            image:image
+        })
+
+    })
+
+    .then(res=>res.json())
+
+    .then(data=>{
+
+        output.src=data.image;
+
+    });
+
+
+},200);
+
+
+</script>
 
 
 </body>

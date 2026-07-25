@@ -1,56 +1,47 @@
-from flask import Flask, render_template, Response
+from flask import Flask, render_template, request, jsonify
 import cv2
+import numpy as np
+import base64
 from detector import detect
 
 app = Flask(__name__)
 
-# Open webcam
-camera = cv2.VideoCapture(0)
 
-
-# Home page
 @app.route("/")
 def index():
     return render_template("index.html")
 
 
-# Generate video frames
-def generate_frames():
+@app.route("/process", methods=["POST"])
+def process():
 
-    while True:
+    data = request.json["image"]
 
-        success, frame = camera.read()
+    # Remove base64 header
+    encoded_data = data.split(",")[1]
 
-        if not success:
-            break
-
-        # Send frame to MediaPipe detector
-        frame = detect(frame)
-
-        # Convert frame to jpg
-        ret, buffer = cv2.imencode(".jpg", frame)
-
-        frame = buffer.tobytes()
-
-        # Send frame to browser
-        yield (
-            b"--frame\r\n"
-            b"Content-Type: image/jpeg\r\n\r\n" 
-            + frame +
-            b"\r\n"
-        )
-
-
-# Video route
-@app.route("/video")
-def video():
-
-    return Response(
-        generate_frames(),
-        mimetype="multipart/x-mixed-replace; boundary=frame"
+    # Decode image
+    nparr = np.frombuffer(
+        base64.b64decode(encoded_data),
+        np.uint8
     )
 
+    frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-# Run app
+    # MediaPipe detection
+    frame = detect(frame)
+
+    # Encode result
+    _, buffer = cv2.imencode(".jpg", frame)
+
+    img_base64 = base64.b64encode(
+        buffer
+    ).decode("utf-8")
+
+    return jsonify({
+        "image": "data:image/jpeg;base64," + img_base64
+    })
+
+
 if __name__ == "__main__":
     app.run(debug=True)
